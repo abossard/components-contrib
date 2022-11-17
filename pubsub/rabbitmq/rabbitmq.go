@@ -99,6 +99,8 @@ func NewRabbitMQ(logger logger.Logger) pubsub.PubSub {
 }
 
 func dial(uri string) (rabbitMQConnectionBroker, rabbitMQChannelBroker, error) {
+	// check if uri starts with amqps, if so: call DialTLS
+	// check if uri starts with amqps+external: call DialTLS_ExternalAuth
 	conn, err := amqp.Dial(uri)
 	if err != nil {
 		return nil, nil, err
