@@ -259,6 +259,26 @@ func (r *rabbitMQ) publishSync(ctx context.Context, req *pubsub.PublishRequest) 
 		p.Priority = priority
 	}
 
+	contentType, ok := metadata.TryGetContentType(req.Metadata)
+	if ok {
+		p.ContentType = contentType
+	}
+
+	messageId, ok := metadata.TryGetMessageId(req.Metadata)
+	if ok {
+		p.MessageId = messageId
+	}
+
+	correlationId, ok := metadata.TryGetCorrelationId(req.Metadata)
+	if ok {
+		p.CorrelationId = correlationId
+	}
+
+	aType, ok := metadata.TryGetType(req.Metadata)
+	if ok {
+		p.Type = aType
+	}
+
 	confirm, err := r.channel.PublishWithDeferredConfirmWithContext(ctx, req.Topic, routingKey, false, false, p)
 	if err != nil {
 		r.logger.Errorf("%s publishing to %s failed in channel.Publish: %v", logMessagePrefix, req.Topic, err)
@@ -481,7 +501,7 @@ func (r *rabbitMQ) prepareSubscription(channel rabbitMQChannelBroker, req pubsub
 		metadataRoutingKey = val
 	}
 	routingKeys := strings.Split(metadataRoutingKey, ",")
-	for i := range len(routingKeys) {
+	for i := range routingKeys {
 		routingKey := routingKeys[i]
 		r.logger.Debugf("%s binding queue '%s' to exchange '%s' with routing key '%s'", logMessagePrefix, q.Name, req.Topic, routingKey)
 		err = channel.QueueBind(q.Name, routingKey, req.Topic, false, nil)
